@@ -5,6 +5,7 @@ from typing import Optional
 
 import typer
 import yaml
+from rich.panel import Panel
 
 from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.utils.console import (
@@ -159,7 +160,6 @@ def app_show(
     strategy = inheritance.get("strategy", "deep-merge")
     lines.append(f"[bold]병합 전략:[/bold]   {strategy}")
 
-    from rich.panel import Panel
     console.print(Panel("\n".join(lines), title=f"앱: {app_name}", style="blue"))
 
 
