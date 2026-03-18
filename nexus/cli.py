@@ -6,6 +6,7 @@ from nexus import __version__
 from nexus.commands import app as app_cmd
 from nexus.commands import agent as agent_cmd
 from nexus.commands.link import link_app
+from nexus.commands.sync import sync_app
 
 app = typer.Typer(
     name="nxs",
@@ -16,6 +17,7 @@ app = typer.Typer(
 app.add_typer(app_cmd.app, name="app")
 app.add_typer(agent_cmd.app, name="agent")
 app.add_typer(link_app, name="link")
+app.add_typer(sync_app, name="sync")
 
 
 def version_callback(value: bool):
@@ -77,6 +79,37 @@ def unlink_command(
     """프로젝트의 심볼릭 링크를 해제합니다."""
     from nexus.commands.link import do_unlink
     do_unlink(app_name, target, agent)
+
+
+@app.command("status")
+def status_command(
+    app_name: Optional[str] = typer.Option(
+        None, "--app", help="특정 앱 이름"
+    ),
+    with_links: bool = typer.Option(
+        False, "--with-links", help="링크 상태 포함"
+    ),
+):
+    """Registry 상태를 표시합니다."""
+    from nexus.commands.status import do_status
+    do_status(app_name, with_links)
+
+
+@app.command("install")
+def install_command(
+    from_repo: Optional[str] = typer.Option(
+        None, "--from-repo", help="Git 레포 URL에서 설치"
+    ),
+    verify: bool = typer.Option(
+        False, "--verify", help="설치 상태 확인"
+    ),
+    apps: Optional[str] = typer.Option(
+        None, "--apps", help="특정 앱만 설치 (쉼표 구분: web-frontend,api-server)"
+    ),
+):
+    """Git 레포에서 Registry를 설치합니다."""
+    from nexus.commands.install import do_install
+    do_install(from_repo, verify, apps)
 
 
 if __name__ == "__main__":
