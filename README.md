@@ -4,21 +4,25 @@ AI 에이전트(Claude, Gemini, Codex, Cursor, Copilot) 설정을 팀 전체에 
 
 ## 개념 구조
 
-```mermaid
-graph TD
-    R["~/.confhub (Registry)"]
-    ROOT["root/agents/claude/\n팀 공통 기본 설정"]
-    APP["apps/api-server/agents/claude/\n프로젝트별 설정"]
-    RESOLVED["resolved/api-server/claude/\n병합 결과 (자동 생성)"]
-    REMOTE["confhub-config\n(private git repo)"]
-    PROJECT["api-server 프로젝트\n.nexus-config/ (submodule)"]
-    SYMLINK[".claude/ 심볼릭 링크"]
-
-    ROOT -->|"상속 + 오버라이드"| RESOLVED
-    APP -->|"confhub resolve"| RESOLVED
-    RESOLVED -->|"confhub sync push"| REMOTE
-    REMOTE -->|"git submodule"| PROJECT
-    PROJECT -->|"confhub submodule init"| SYMLINK
+```
+~/.confhub (Registry)
+├── root/agents/claude/        ── 팀 공통 기본 설정 ──┐
+└── apps/api-server/agents/    ── 프로젝트별 설정 ────┴─► confhub resolve ─► resolved/api-server/claude/
+                                                                                        │
+                                                                              confhub sync push
+                                                                                        │
+                                                                                        ▼
+                                                                          confhub-config (private git repo)
+                                                                                        │
+                                                                                  git submodule
+                                                                                        │
+                                                                                        ▼
+                                                                         api-server 프로젝트 (.nexus-config/)
+                                                                                        │
+                                                                          confhub submodule init
+                                                                                        │
+                                                                                        ▼
+                                                                              .claude/ 심볼릭 링크
 ```
 
 ## 설치
@@ -77,20 +81,16 @@ confhub link web-frontend --target /workspace/my-project
 
 ### 심볼릭 링크 방식 (개인 머신 로컬 적용)
 
-```mermaid
-sequenceDiagram
-    participant A as 설정 관리자
-    participant R as ~/.confhub (Registry)
-    participant G as confhub-config (git)
-    participant T as 팀원
-
-    A->>R: confhub app add / confhub agent add
-    A->>R: 파일 직접 편집
-    A->>R: confhub resolve <app>
-    A->>G: confhub sync push
-    T->>G: confhub sync pull
-    T->>R: confhub resolve --all
-    Note over T: 심볼릭 링크로<br/>연결된 프로젝트에 즉시 반영
+```
+설정 관리자                        팀원
+──────────────────────             ──────────────────────
+confhub app add <app>
+confhub agent add claude
+파일 직접 편집
+confhub resolve <app>
+confhub sync push       ──────►   confhub sync pull
+                                   confhub resolve --all
+                                   (심볼릭 링크 프로젝트에 즉시 반영)
 ```
 
 ```bash
@@ -105,25 +105,21 @@ confhub sync pull && confhub resolve --all
 
 confhub-config 레포 전체가 아닌 해당 앱의 `resolved/<app>/` 만 체크아웃합니다.
 
-```mermaid
-sequenceDiagram
-    participant A as 설정 관리자
-    participant N as ~/.confhub (Registry)
-    participant G as confhub-config (git)
-    participant P as api-server 프로젝트
-    participant T as 팀원
-
-    A->>N: confhub app add api-server
-    A->>N: confhub agent add claude --app api-server
-    A->>N: 파일 직접 편집
-    A->>G: confhub submodule add api-server --target ./api-server
-    Note over A,G: resolve → push → submodule add<br/>→ sparse-checkout 자동 수행
-    A->>P: .nexus-config/ submodule + .claude/ 심볼릭 링크 생성
-    A->>P: git push (프로젝트 레포)
-
-    T->>P: git clone api-server
-    T->>P: confhub submodule init api-server
-    Note over T,P: sparse-checkout + 심볼릭 링크 자동 설정
+```
+설정 관리자                                      팀원
+─────────────────────────────────              ──────────────────────────────
+confhub app add api-server
+confhub agent add claude --app api-server
+파일 직접 편집
+confhub submodule add api-server \
+  --target ./api-server
+  (resolve → push → submodule add
+   → sparse-checkout 자동 수행)
+.nexus-config/ submodule 생성
+.claude/ 심볼릭 링크 생성
+git push (프로젝트 레포)          ──────►   git clone --recurse-submodules
+                                             confhub submodule init api-server
+                                             (sparse-checkout + 심볼릭 링크 완료)
 ```
 
 **설정 관리자 (최초 1회):**
@@ -167,14 +163,10 @@ confhub submodule init api-server
 
 **설정 업데이트:**
 
-```mermaid
-flowchart LR
-    E["파일 직접 편집\n~/.confhub/apps/api-server/..."]
-    S["confhub submodule add api-server\n--target ./api-server"]
-    GP["git push\n(프로젝트 레포)"]
-    T["팀원: git pull\n+ git submodule update\n+ confhub submodule init api-server"]
-
-    E --> S --> GP --> T
+```
+파일 직접 편집                confhub submodule add        git push          팀원: git pull
+~/.confhub/apps/...    ──►   api-server --target ...  ──►  (프로젝트 레포)  ──►  + submodule update
+                              (resolve + push 포함)                               + confhub submodule init
 ```
 
 ```bash
