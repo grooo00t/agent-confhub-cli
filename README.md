@@ -24,7 +24,7 @@ graph TD
 ## 설치
 
 ```bash
-pipx install nxs-cli
+pipx install nexus-agent
 ```
 
 ## 빠른 시작
