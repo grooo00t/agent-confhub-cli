@@ -2,6 +2,25 @@
 
 AI 에이전트(Claude, Gemini, Codex, Cursor, Copilot) 설정을 팀 전체에 중앙 관리하는 CLI 프레임워크.
 
+## 개념 구조
+
+```mermaid
+graph TD
+    R["~/.nexus (Registry)"]
+    ROOT["root/agents/claude/\n팀 공통 기본 설정"]
+    APP["apps/api-server/agents/claude/\n프로젝트별 설정"]
+    RESOLVED["resolved/api-server/claude/\n병합 결과 (자동 생성)"]
+    REMOTE["nexus-config\n(private git repo)"]
+    PROJECT["api-server 프로젝트\n.nexus-config/ (submodule)"]
+    SYMLINK[".claude/ 심볼릭 링크"]
+
+    ROOT -->|"상속 + 오버라이드"| RESOLVED
+    APP -->|"nxs resolve"| RESOLVED
+    RESOLVED -->|"nxs sync push"| REMOTE
+    REMOTE -->|"git submodule"| PROJECT
+    PROJECT -->|"nxs submodule init"| SYMLINK
+```
+
 ## 설치
 
 ```bash
@@ -15,7 +34,7 @@ pipx install nexus-cli
 nxs init
 
 # 앱 등록
-nxs app add web-frontend --description "React 웹 프론트엔드"
+nxs app add web-frontend
 
 # Claude 에이전트 설정 추가
 nxs agent add claude --app web-frontend
@@ -58,6 +77,22 @@ nxs link web-frontend --target /workspace/my-project
 
 ### 심볼릭 링크 방식 (개인 머신 로컬 적용)
 
+```mermaid
+sequenceDiagram
+    participant A as 설정 관리자
+    participant R as ~/.nexus (Registry)
+    participant G as nexus-config (git)
+    participant T as 팀원
+
+    A->>R: nxs app add / nxs agent add
+    A->>R: 파일 직접 편집
+    A->>R: nxs resolve <app>
+    A->>G: nxs sync push
+    T->>G: nxs sync pull
+    T->>R: nxs resolve --all
+    Note over T: 심볼릭 링크로<br/>연결된 프로젝트에 즉시 반영
+```
+
 ```bash
 # 설정 관리자 - 설정 변경 후 push
 nxs sync push --message "feat: Claude 설정 업데이트"
@@ -69,6 +104,27 @@ nxs sync pull && nxs resolve --all
 ### Git Submodule 방식 (sparse-checkout으로 앱 설정만 적용)
 
 nexus-config 레포 전체가 아닌 해당 앱의 `resolved/<app>/` 만 체크아웃합니다.
+
+```mermaid
+sequenceDiagram
+    participant A as 설정 관리자
+    participant N as ~/.nexus (Registry)
+    participant G as nexus-config (git)
+    participant P as api-server 프로젝트
+    participant T as 팀원
+
+    A->>N: nxs app add api-server
+    A->>N: nxs agent add claude --app api-server
+    A->>N: 파일 직접 편집
+    A->>G: nxs submodule add api-server --target ./api-server
+    Note over A,G: resolve → push → submodule add<br/>→ sparse-checkout 자동 수행
+    A->>P: .nexus-config/ submodule + .claude/ 심볼릭 링크 생성
+    A->>P: git push (프로젝트 레포)
+
+    T->>P: git clone api-server
+    T->>P: nxs submodule init api-server
+    Note over T,P: sparse-checkout + 심볼릭 링크 자동 설정
+```
 
 **설정 관리자 (최초 1회):**
 
@@ -110,6 +166,16 @@ nxs submodule init api-server
 ```
 
 **설정 업데이트:**
+
+```mermaid
+flowchart LR
+    E["파일 직접 편집\n~/.nexus/apps/api-server/..."]
+    S["nxs submodule add api-server\n--target ./api-server"]
+    GP["git push\n(프로젝트 레포)"]
+    T["팀원: git pull\n+ git submodule update\n+ nxs submodule init api-server"]
+
+    E --> S --> GP --> T
+```
 
 ```bash
 # ~/.nexus/apps/api-server/agents/claude/ 파일 직접 수정 후
