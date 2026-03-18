@@ -33,7 +33,7 @@ def _get_registry() -> Registry:
 
 
 def _run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
-    """프로젝트 디렉토리에서 git 명령 실행"""
+    """지정 디렉토리에서 git 명령 실행"""
     result = subprocess.run(
         ["git"] + args,
         cwd=cwd,
@@ -73,6 +73,45 @@ def _resolve_target_agents(
     return valid
 
 
+def _apply_sparse_checkout(submodule_path: Path, app_name: str) -> None:
+    """submodule에 sparse-checkout 적용 — resolved/<app>/ 만 체크아웃"""
+    _run_git(["sparse-checkout", "init", "--cone"], cwd=submodule_path)
+    _run_git(["sparse-checkout", "set", f"resolved/{app_name}"], cwd=submodule_path)
+
+
+def _create_symlinks(
+    project_path: Path, app_name: str, agent_ids: list[str]
+) -> None:
+    """에이전트별 상대 경로 심볼릭 링크 생성"""
+    for agent_id in agent_ids:
+        try:
+            agent_cfg = get_agent(agent_id)
+        except ValueError:
+            print_warning(f"알 수 없는 에이전트: {agent_id}, 건너뜁니다.")
+            continue
+
+        link_path = project_path / agent_cfg.link_target
+
+        if link_path.exists() or link_path.is_symlink():
+            print_warning(f"  이미 존재합니다: {agent_cfg.link_target}, 건너뜁니다.")
+            continue
+
+        submodule_target_abs = (
+            project_path
+            / SUBMODULE_DIR
+            / "resolved"
+            / app_name
+            / agent_id
+            / agent_cfg.link_target
+        )
+
+        link_path.parent.mkdir(parents=True, exist_ok=True)
+        rel_target = Path(os.path.relpath(submodule_target_abs, link_path.parent))
+
+        link_path.symlink_to(rel_target)
+        print_success(f"  {agent_cfg.link_target} → {rel_target}")
+
+
 # ── 명령어 ─────────────────────────────────────────────────────────────────────
 
 
@@ -86,7 +125,7 @@ def submodule_add(
         None, "--agent", help="특정 에이전트만 적용 (쉼표 구분: claude,gemini)"
     ),
 ):
-    """프로젝트에 nexus 설정을 git submodule로 적용합니다."""
+    """프로젝트에 nexus 설정을 git submodule + sparse-checkout으로 적용합니다."""
     try:
         registry = _get_registry()
     except RegistryNotFoundError as exc:
@@ -102,7 +141,8 @@ def submodule_add(
     remote_url = nexus_repo.get_remote_url()
     if not remote_url:
         print_error(
-            "Registry의 원격 레포가 설정되지 않았습니다. 'nxs sync remote set <url>'로 설정하세요."
+            "Registry의 원격 레포가 설정되지 않았습니다. "
+            "'nxs sync remote set <url>'로 설정하세요."
         )
         raise typer.Exit(1)
 
@@ -115,20 +155,18 @@ def submodule_add(
         print_error(f"대상 디렉토리가 git 레포가 아닙니다: {project_path}")
         raise typer.Exit(1)
 
-    # 적용할 에이전트 결정
     agent_ids = _resolve_target_agents(registry, app_name, agent)
 
-    # resolve 실행 (resolved/ 최신화)
-    print_info("[1/3] 설정 병합 중...")
+    # [1/4] resolve
+    print_info("[1/4] 설정 병합 중...")
     try:
-        merger = ConfigMerger(registry.base_path)
-        merger.resolve_app(app_name)
+        ConfigMerger(registry.base_path).resolve_app(app_name)
     except Exception as exc:
         print_error(f"resolve 실패: {exc}")
         raise typer.Exit(1)
 
-    # resolved/ 포함하여 nexus 레포 push
-    print_info(f"[2/3] resolved/ 를 remote에 push 중: {remote_url}")
+    # [2/4] nexus 레포 push (resolved/ 포함)
+    print_info(f"[2/4] resolved/ 를 remote에 push 중: {remote_url}")
     try:
         sha = nexus_repo.commit_all(f"chore: resolve {app_name}")
         if sha:
@@ -138,8 +176,8 @@ def submodule_add(
         print_error(f"push 실패: {exc}")
         raise typer.Exit(1)
 
-    print_info("[3/3] git submodule 추가 중...")
-    # submodule 추가
+    # [3/4] submodule 추가
+    print_info("[3/4] git submodule 추가 중...")
     submodule_path = project_path / SUBMODULE_DIR
     if submodule_path.exists():
         print_warning(f"'{SUBMODULE_DIR}'이 이미 존재합니다. submodule 추가를 건너뜁니다.")
@@ -150,37 +188,85 @@ def submodule_add(
             print_error(str(exc))
             raise typer.Exit(1)
 
-    # 에이전트별 상대 경로 심볼릭 링크 생성
+    # [4/4] sparse-checkout — resolved/<app>/ 만 체크아웃
+    print_info(f"[4/4] sparse-checkout 적용 중: resolved/{app_name}/")
+    try:
+        _apply_sparse_checkout(submodule_path, app_name)
+    except GitError as exc:
+        print_error(str(exc))
+        raise typer.Exit(1)
+
+    # 심볼릭 링크 생성
     console.print()
-    for agent_id in agent_ids:
-        try:
-            agent_cfg = get_agent(agent_id)
-        except ValueError:
-            print_warning(f"알 수 없는 에이전트: {agent_id}, 건너뜁니다.")
-            continue
-
-        # 심볼릭 링크 위치: project/<link_target>
-        link_path = project_path / agent_cfg.link_target
-
-        if link_path.exists() or link_path.is_symlink():
-            print_warning(f"이미 존재합니다: {agent_cfg.link_target}, 건너뜁니다.")
-            continue
-
-        # submodule 내 대상 경로: .nexus-config/resolved/<app>/<agent>/<link_target>
-        submodule_target_abs = (
-            project_path / SUBMODULE_DIR / "resolved" / app_name / agent_id / agent_cfg.link_target
-        )
-
-        # 상대 경로 계산 (symlink 위치의 부모 디렉토리 기준)
-        link_path.parent.mkdir(parents=True, exist_ok=True)
-        rel_target = Path(os.path.relpath(submodule_target_abs, link_path.parent))
-
-        link_path.symlink_to(rel_target)
-        print_success(f"  {agent_cfg.link_target} → {rel_target}")
+    _create_symlinks(project_path, app_name, agent_ids)
 
     console.print()
     print_success(f"'{app_name}' submodule 설정 완료: {project_path}")
-    print_info("팀원은 레포 클론 후 'git submodule update --init'을 실행하세요.")
+    print_info(
+        "팀원은 레포 클론 후 'nxs submodule init <app>' 을 실행하세요. "
+        "(sparse-checkout 및 심볼릭 링크 자동 설정)"
+    )
+
+
+@submodule_app.command("init")
+def submodule_init(
+    app_name: str = typer.Argument(..., help="앱 이름"),
+    target: Path | None = typer.Option(
+        None, "--target", "-t", help="프로젝트 경로 (기본: 현재 디렉토리)"
+    ),
+    agent: str | None = typer.Option(
+        None, "--agent", help="특정 에이전트만 적용 (쉼표 구분: claude,gemini)"
+    ),
+):
+    """클론 후 sparse-checkout 및 심볼릭 링크를 설정합니다. (팀원용)"""
+    try:
+        registry = _get_registry()
+    except RegistryNotFoundError as exc:
+        print_error(str(exc))
+        raise typer.Exit(1)
+
+    if not registry.app_exists(app_name):
+        print_error(f"앱 '{app_name}'을(를) 찾을 수 없습니다.")
+        raise typer.Exit(1)
+
+    project_path = Path(target).resolve() if target else Path.cwd()
+    if not project_path.exists():
+        print_error(f"프로젝트 경로를 찾을 수 없습니다: {project_path}")
+        raise typer.Exit(1)
+
+    submodule_path = project_path / SUBMODULE_DIR
+
+    # submodule 초기화 (미완료 상태이면)
+    if not submodule_path.exists() or not any(submodule_path.iterdir()):
+        print_info("git submodule 초기화 중...")
+        try:
+            _run_git(["submodule", "update", "--init", SUBMODULE_DIR], cwd=project_path)
+        except GitError as exc:
+            print_error(str(exc))
+            raise typer.Exit(1)
+
+    if not submodule_path.exists():
+        print_error(
+            f"'{SUBMODULE_DIR}' submodule을 찾을 수 없습니다. "
+            "먼저 'git submodule update --init'을 실행하세요."
+        )
+        raise typer.Exit(1)
+
+    # sparse-checkout 적용
+    print_info(f"sparse-checkout 적용 중: resolved/{app_name}/")
+    try:
+        _apply_sparse_checkout(submodule_path, app_name)
+    except GitError as exc:
+        print_error(str(exc))
+        raise typer.Exit(1)
+
+    # 심볼릭 링크 생성
+    agent_ids = _resolve_target_agents(registry, app_name, agent)
+    console.print()
+    _create_symlinks(project_path, app_name, agent_ids)
+
+    console.print()
+    print_success(f"'{app_name}' 초기화 완료: {project_path}")
 
 
 @submodule_app.command("remove")
@@ -212,7 +298,6 @@ def submodule_remove(
         print_error(f"프로젝트 경로를 찾을 수 없습니다: {project_path}")
         raise typer.Exit(1)
 
-    # 적용할 에이전트 결정
     agent_ids = _resolve_target_agents(registry, app_name, agent)
 
     # 심볼릭 링크 제거

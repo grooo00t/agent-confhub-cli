@@ -37,7 +37,8 @@ nxs link web-frontend --target /workspace/my-project
 | `nxs resolve <app>` | 설정 병합 빌드 |
 | `nxs link <app>` | 프로젝트에 심볼릭 링크 |
 | `nxs unlink <app>` | 링크 해제 |
-| `nxs submodule add <app>` | 프로젝트에 git submodule로 설정 적용 |
+| `nxs submodule add <app>` | 프로젝트에 git submodule + sparse-checkout으로 설정 적용 |
+| `nxs submodule init <app>` | 클론 후 sparse-checkout 및 심볼릭 링크 설정 (팀원용) |
 | `nxs submodule remove <app>` | submodule 설정 제거 |
 | `nxs sync push/pull` | Git 동기화 |
 | `nxs status` | Registry 상태 확인 |
@@ -65,9 +66,9 @@ nxs sync push --message "feat: Claude 설정 업데이트"
 nxs sync pull && nxs resolve --all
 ```
 
-### Git Submodule 방식 (레포 클론만으로 자동 적용)
+### Git Submodule 방식 (sparse-checkout으로 앱 설정만 적용)
 
-팀원이 nexus CLI 없이도 프로젝트 클론 시 AI 에이전트 설정이 자동으로 적용됩니다.
+nexus-config 레포 전체가 아닌 해당 앱의 `resolved/<app>/` 만 체크아웃합니다.
 
 **설정 관리자 (최초 1회):**
 
@@ -81,7 +82,7 @@ nxs agent add claude --app api-server
 # ~/.nexus/apps/api-server/agents/claude/ 에서 직접 파일 편집
 
 # 3. 프로젝트에 submodule 적용
-#    (resolve → remote push → git submodule add 자동 수행)
+#    resolve → remote push → git submodule add → sparse-checkout 자동 수행
 nxs submodule add api-server --target /workspace/api-server
 ```
 
@@ -89,23 +90,23 @@ nxs submodule add api-server --target /workspace/api-server
 
 ```
 api-server/
-├── .nexus-config/          ← nexus-config 레포 (submodule)
+├── .nexus-config/                        ← nexus-config 레포 (sparse-checkout)
 │   └── resolved/
-│       └── api-server/
+│       └── api-server/                   ← 이 앱 설정만 체크아웃
 │           └── claude/
 │               └── .claude/
 ├── .claude -> .nexus-config/resolved/api-server/claude/.claude
 └── ...
 ```
 
-**팀원 (레포 클론 시):**
+**팀원 (레포 클론 후):**
 
 ```bash
-git clone --recurse-submodules https://github.com/your-team/api-server.git
-# .claude/ 심볼릭 링크가 자동으로 연결됨
+git clone https://github.com/your-team/api-server.git
+cd api-server
 
-# 또는 이미 클론된 경우
-git submodule update --init
+# nexus CLI로 sparse-checkout + 심볼릭 링크 한 번에 설정
+nxs submodule init api-server
 ```
 
 **설정 업데이트:**
@@ -115,8 +116,9 @@ git submodule update --init
 nxs submodule add api-server --target /workspace/api-server
 # resolve → push → submodule ref 갱신
 
-# 팀원은 프로젝트에서 pull
+# 팀원은 프로젝트에서 반영
 git pull && git submodule update
+nxs submodule init api-server  # sparse-checkout 재적용
 ```
 
 ## 개발
