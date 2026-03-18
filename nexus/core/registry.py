@@ -75,12 +75,12 @@ class Registry:
     def load_config(self) -> dict:
         """nexus.config.yaml 로드"""
         self.require_initialized()
-        with open(self.config_path) as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
 
-    def save_config(self, config: dict):
+    def save_config(self, config: dict) -> None:
         """nexus.config.yaml 저장"""
-        with open(self.config_path, "w") as f:
+        with open(self.config_path, "w", encoding="utf-8") as f:
             yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
     def get_app_path(self, app_name: str) -> Path:
@@ -118,20 +118,20 @@ class Registry:
         config_file = self.get_app_path(app_name) / "app.config.yaml"
         if not config_file.exists():
             raise FileNotFoundError(f"앱 '{app_name}'을 찾을 수 없습니다")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
 
-    def save_app_config(self, app_name: str, config: dict):
+    def save_app_config(self, app_name: str, config: dict) -> None:
         """앱 설정 파일 저장"""
         config_file = self.get_app_path(app_name) / "app.config.yaml"
-        with open(config_file, "w") as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
     @classmethod
     def get_default(cls) -> "Registry":
         """~/.nexusrc에서 경로를 읽어 기본 Registry 반환"""
         if cls.NEXUSRC_PATH.exists():
-            with open(cls.NEXUSRC_PATH) as f:
+            with open(cls.NEXUSRC_PATH, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
                 path = data.get("registry_path")
                 if path:
@@ -139,7 +139,7 @@ class Registry:
         return cls(cls.DEFAULT_PATH)
 
     @classmethod
-    def save_nexusrc(cls, registry_path: Path):
+    def save_nexusrc(cls, registry_path: Path) -> None:
         """~/.nexusrc에 Registry 경로 저장"""
-        with open(cls.NEXUSRC_PATH, "w") as f:
+        with open(cls.NEXUSRC_PATH, "w", encoding="utf-8") as f:
             yaml.dump({"registry_path": str(registry_path)}, f)

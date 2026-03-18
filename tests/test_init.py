@@ -99,6 +99,5 @@ def test_init_registers_nexusrc(tmp_path, tmp_nexusrc):
 
     assert tmp_nexusrc.exists()
     with open(tmp_nexusrc) as f:
-        import yaml
         data = yaml.safe_load(f)
     assert str(registry_path) in data.get("registry_path", "")
