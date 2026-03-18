@@ -1,8 +1,6 @@
 """nxs agent 명령어 - 에이전트 설정 관리"""
 
-import os
 import shutil
-import subprocess
 from pathlib import Path
 
 import typer
@@ -268,57 +266,6 @@ def agent_show(
             file_syntax = Syntax(content, lang, theme="monokai", line_numbers=True)
             console.print(Panel(file_syntax, title=f"파일: {rel_path}", style="cyan"))
 
-
-@app.command("edit")
-def agent_edit(
-    agent_id: str = typer.Argument(..., help="에이전트 식별자"),
-    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
-    root: bool = typer.Option(False, "--root", "-r", help="루트 레벨"),
-    file: str | None = typer.Option(
-        None, "--file", "-f", help="편집할 파일명 (기본: agent.config.yaml)"
-    ),
-):
-    """에이전트 설정 파일을 편집합니다."""
-    try:
-        registry = _get_registry()
-    except RegistryNotFoundError as exc:
-        print_error(str(exc))
-        raise typer.Exit(1)
-
-    # 에이전트 유효성 검사
-    try:
-        get_agent(agent_id)
-    except ValueError as exc:
-        print_error(str(exc))
-        raise typer.Exit(1)
-
-    try:
-        scope, agent_dir = _resolve_scope_and_dir(registry, agent_id, app_name, root)
-    except typer.Exit:
-        raise
-
-    if not (agent_dir / "agent.config.yaml").exists():
-        print_error(f"에이전트 '{agent_id}' 설정을 찾을 수 없습니다. ({agent_dir})")
-        raise typer.Exit(1)
-
-    # 편집 대상 파일 결정
-    target_file = agent_dir / (file if file else "agent.config.yaml")
-    if not target_file.exists():
-        print_error(f"파일을 찾을 수 없습니다: {target_file}")
-        raise typer.Exit(1)
-
-    # 에디터 결정
-    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"
-
-    try:
-        subprocess.run([editor, str(target_file)], check=True)
-        print_success(f"편집 완료: {target_file}")
-    except subprocess.CalledProcessError as exc:
-        print_error(f"에디터 실행 오류: {exc}")
-        raise typer.Exit(1)
-    except FileNotFoundError:
-        print_error(f"에디터를 찾을 수 없습니다: {editor}")
-        raise typer.Exit(1)
 
 
 @app.command("remove")

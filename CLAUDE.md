@@ -76,7 +76,7 @@ uv tool run ty check nexus/
 nxs init [--path PATH] [--from-repo URL]
 nxs app add <name> / list / show <name> / remove <name>
 nxs agent add <agent> --app <app>|--root
-nxs agent edit/show/list/remove <agent> --app <app>|--root
+nxs agent show/list/remove <agent> --app <app>|--root
 nxs resolve <app> / --all / --dry-run
 nxs link <app> [--target PATH] [--agent claude,gemini]
 nxs unlink <app>
