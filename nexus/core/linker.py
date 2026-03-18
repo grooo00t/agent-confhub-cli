@@ -199,12 +199,18 @@ class Linker:
         if app_name not in links:
             return
 
-        # 해당 project_path 항목 제거
-        links[app_name] = [
-            e for e in links[app_name]
-            if e["project_path"] != str(project_path)
-        ]
+        # 해당 project_path 항목에서 해제된 에이전트만 제거
+        updated_entries = []
+        for entry in links[app_name]:
+            if entry["project_path"] != str(project_path):
+                updated_entries.append(entry)
+            else:
+                remaining = [a for a in entry.get("agents", []) if a not in agents]
+                if remaining:
+                    updated_entries.append({**entry, "agents": remaining})
+                # remaining이 비면 항목 자체를 제거
 
+        links[app_name] = updated_entries
         if not links[app_name]:
             del links[app_name]
 

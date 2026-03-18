@@ -1,7 +1,10 @@
 """Linker 단위 테스트"""
-import pytest
 import json
+import shutil
 from pathlib import Path
+
+import pytest
+
 from nexus.core.linker import Linker, LinkerError
 
 
@@ -129,7 +132,6 @@ def test_get_broken_links(registry_with_resolved, tmp_path):
     linker.link("web-frontend", project, agents=["claude"])
 
     # resolved 폴더 삭제하여 링크 깨뜨리기
-    import shutil
     shutil.rmtree(registry_with_resolved / "resolved")
 
     broken = linker.get_broken_links()
@@ -153,7 +155,6 @@ def test_link_no_resolved_no_auto(registry_with_resolved, tmp_path):
     project.mkdir()
 
     # resolved 폴더 삭제
-    import shutil
     shutil.rmtree(registry_with_resolved / "resolved")
 
     linker = Linker(registry_with_resolved)
