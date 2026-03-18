@@ -5,6 +5,7 @@ import typer
 from nexus import __version__
 from nexus.commands import app as app_cmd
 from nexus.commands import agent as agent_cmd
+from nexus.commands.link import link_app
 
 app = typer.Typer(
     name="nxs",
@@ -14,6 +15,7 @@ app = typer.Typer(
 
 app.add_typer(app_cmd.app, name="app")
 app.add_typer(agent_cmd.app, name="agent")
+app.add_typer(link_app, name="link")
 
 
 def version_callback(value: bool):
@@ -60,6 +62,21 @@ def resolve_command(
     """설정을 병합하여 resolved 디렉토리에 저장합니다."""
     from nexus.commands.resolve import do_resolve
     do_resolve(app_name, all_apps, dry_run)
+
+
+@app.command("unlink")
+def unlink_command(
+    app_name: str = typer.Argument(..., help="앱 이름"),
+    target: Optional[Path] = typer.Option(
+        None, "--target", "-t", help="링크 해제할 프로젝트 경로 (기본: 현재 디렉토리)"
+    ),
+    agent: Optional[str] = typer.Option(
+        None, "--agent", help="특정 에이전트만 해제 (쉼표 구분: claude,gemini)"
+    ),
+):
+    """프로젝트의 심볼릭 링크를 해제합니다."""
+    from nexus.commands.link import do_unlink
+    do_unlink(app_name, target, agent)
 
 
 if __name__ == "__main__":
