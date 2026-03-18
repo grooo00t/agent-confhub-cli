@@ -1,10 +1,16 @@
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-.venv/
 *.egg-info/
 dist/
 build/
-.pytest_cache/
-.coverage
-htmlcov/
+.venv/
+*.egg
+
+# Nexus
+resolved/
+
+# Editor
+.DS_Store
+.idea/
+.vscode/

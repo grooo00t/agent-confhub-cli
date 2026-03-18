@@ -26,3 +26,11 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["nexus"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.coverage.run]
+source = ["nexus"]
+omit = ["tests/*"]
