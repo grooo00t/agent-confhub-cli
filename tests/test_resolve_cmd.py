@@ -1,6 +1,8 @@
 """nxs resolve 명령어 테스트"""
+
 import pytest
 from typer.testing import CliRunner
+
 from nexus.cli import app
 from nexus.core.registry import Registry
 

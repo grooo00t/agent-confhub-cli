@@ -1,13 +1,11 @@
 """nxs status 명령어 - Registry 상태 확인"""
-from pathlib import Path
-from typing import Optional
 
 import typer
 
-from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.core.linker import Linker
-from nexus.utils.git import GitRepo
+from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.utils.console import console, print_error
+from nexus.utils.git import GitRepo
 
 
 def _get_registry() -> Registry:
@@ -45,7 +43,7 @@ def _get_app_status_line(registry: Registry, app_name: str) -> tuple[str, str]:
 
 
 def do_status(
-    app_name: Optional[str] = None,
+    app_name: str | None = None,
     with_links: bool = False,
 ) -> None:
     """status 핵심 로직."""
@@ -116,6 +114,7 @@ def do_status(
     content = "\n".join(lines)
 
     from rich.panel import Panel
+
     console.print(
         Panel(
             content,

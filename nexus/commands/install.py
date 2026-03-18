@@ -1,9 +1,6 @@
 """nxs install 명령어 - Git URL에서 Registry 설치"""
-from pathlib import Path
-from typing import Optional
 
 from nexus.core.registry import Registry, RegistryNotFoundError
-from nexus.utils.git import GitRepo, GitError
 from nexus.utils.console import (
     console,
     print_error,
@@ -11,12 +8,13 @@ from nexus.utils.console import (
     print_success,
     print_warning,
 )
+from nexus.utils.git import GitError, GitRepo
 
 
 def do_install(
-    from_repo: Optional[str] = None,
+    from_repo: str | None = None,
     verify: bool = False,
-    apps: Optional[str] = None,
+    apps: str | None = None,
 ) -> None:
     """install 핵심 로직.
 
@@ -52,10 +50,7 @@ def do_install(
 
     # ── --from-repo 없이 호출 ────────────────────────────────────────────────
     if not from_repo:
-        print_error(
-            "설치할 Git URL을 지정하세요.\n"
-            "사용법: nxs install --from-repo <git-url>"
-        )
+        print_error("설치할 Git URL을 지정하세요.\n사용법: nxs install --from-repo <git-url>")
         raise typer.Exit(1)
 
     # ── [1] 클론 대상 경로 결정 ───────────────────────────────────────────────
@@ -82,6 +77,7 @@ def do_install(
 
         # 클론된 내용을 target_path로 이동
         import shutil
+
         if target_path.exists():
             shutil.rmtree(target_path)
         shutil.move(str(temp_clone), str(target_path))
@@ -118,6 +114,7 @@ def do_install(
 
     if target_apps:
         from nexus.core.merger import ConfigMerger
+
         merger = ConfigMerger(registry.base_path)
         for app_name in target_apps:
             try:

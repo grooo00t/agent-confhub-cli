@@ -1,18 +1,18 @@
 """nxs link/unlink 명령어 - 심볼릭 링크 관리"""
+
 from pathlib import Path
-from typing import Optional
 
 import typer
 
-from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.core.linker import Linker, LinkerError
+from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.utils.console import (
     console,
+    make_table,
     print_error,
     print_info,
     print_success,
     print_warning,
-    make_table,
 )
 
 link_app = typer.Typer(help="심볼릭 링크 관리")
@@ -25,7 +25,7 @@ def _get_registry() -> Registry:
     return registry
 
 
-def _parse_agents(agent_str: Optional[str]) -> Optional[list[str]]:
+def _parse_agents(agent_str: str | None) -> list[str] | None:
     """쉼표로 구분된 에이전트 문자열을 목록으로 변환"""
     if agent_str is None:
         return None
@@ -35,11 +35,11 @@ def _parse_agents(agent_str: Optional[str]) -> Optional[list[str]]:
 @link_app.callback(invoke_without_command=True)
 def link_main(
     ctx: typer.Context,
-    app_name: Optional[str] = typer.Argument(None, help="앱 이름"),
-    target: Optional[Path] = typer.Option(
+    app_name: str | None = typer.Argument(None, help="앱 이름"),
+    target: Path | None = typer.Option(
         None, "--target", "-t", help="링크할 프로젝트 경로 (기본: 현재 디렉토리)"
     ),
-    agent: Optional[str] = typer.Option(
+    agent: str | None = typer.Option(
         None, "--agent", help="특정 에이전트만 링크 (쉼표 구분: claude,gemini)"
     ),
 ):
@@ -106,8 +106,8 @@ def link_status():
 
 def do_link(
     app_name: str,
-    target: Optional[Path],
-    agent: Optional[str],
+    target: Path | None,
+    agent: str | None,
 ) -> None:
     """link 핵심 로직"""
     try:
@@ -136,18 +136,15 @@ def do_link(
         raise typer.Exit(1)
 
     if linked:
-        print_success(
-            f"앱 '{app_name}' → '{project_path}' 링크 완료 "
-            f"({', '.join(linked)})"
-        )
+        print_success(f"앱 '{app_name}' → '{project_path}' 링크 완료 ({', '.join(linked)})")
     else:
         print_info(f"앱 '{app_name}': 링크할 에이전트가 없습니다.")
 
 
 def do_unlink(
     app_name: str,
-    target: Optional[Path],
-    agent: Optional[str],
+    target: Path | None,
+    agent: str | None,
 ) -> None:
     """unlink 핵심 로직"""
     try:
@@ -169,8 +166,6 @@ def do_unlink(
         raise typer.Exit(1)
 
     if unlinked:
-        print_success(
-            f"앱 '{app_name}' 링크 해제 완료 ({', '.join(unlinked)})"
-        )
+        print_success(f"앱 '{app_name}' 링크 해제 완료 ({', '.join(unlinked)})")
     else:
         print_info(f"앱 '{app_name}': 해제할 링크가 없습니다.")

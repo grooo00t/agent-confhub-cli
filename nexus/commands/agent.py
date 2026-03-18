@@ -1,30 +1,31 @@
 """nxs agent 명령어 - 에이전트 설정 관리"""
+
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 import typer
 import yaml
 from rich.panel import Panel
 from rich.syntax import Syntax
 
+from nexus.core.agents import get_agent
 from nexus.core.registry import Registry, RegistryNotFoundError
-from nexus.core.agents import get_agent, SUPPORTED_AGENTS
 from nexus.utils.console import (
     console,
+    make_table,
     print_error,
     print_info,
     print_success,
     print_warning,
-    make_table,
 )
 
 app = typer.Typer(help="에이전트 설정 관리")
 
 
 # ── 에이전트 config.yaml 템플릿 ────────────────────────────────────────────────
+
 
 def _build_agent_config(agent_id: str, scope: str) -> dict:
     """agent.config.yaml 템플릿 생성"""
@@ -49,6 +50,7 @@ def _build_agent_config(agent_id: str, scope: str) -> dict:
 
 # ── 유틸리티 ───────────────────────────────────────────────────────────────────
 
+
 def _get_registry() -> Registry:
     """기본 Registry를 반환하고, 초기화 여부를 확인한다."""
     registry = Registry.get_default()
@@ -59,7 +61,7 @@ def _get_registry() -> Registry:
 def _resolve_scope_and_dir(
     registry: Registry,
     agent_id: str,
-    app_name: Optional[str],
+    app_name: str | None,
     root: bool,
 ) -> tuple[str, Path]:
     """(scope, agent_dir) 튜플 반환. 유효성 검사도 포함."""
@@ -74,6 +76,7 @@ def _resolve_scope_and_dir(
         scope = "root"
         agent_dir = registry.get_root_agent_path(agent_id)
     else:
+        assert app_name is not None
         if not registry.app_exists(app_name):
             print_error(f"앱 '{app_name}'을(를) 찾을 수 없습니다. (not found)")
             raise typer.Exit(1)
@@ -85,10 +88,13 @@ def _resolve_scope_and_dir(
 
 # ── 명령어 ─────────────────────────────────────────────────────────────────────
 
+
 @app.command("add")
 def agent_add(
-    agent_id: str = typer.Argument(..., help="에이전트 식별자 (claude, gemini, codex, cursor, copilot)"),
-    app_name: Optional[str] = typer.Option(None, "--app", "-a", help="앱 이름"),
+    agent_id: str = typer.Argument(
+        ..., help="에이전트 식별자 (claude, gemini, codex, cursor, copilot)"
+    ),
+    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
     root: bool = typer.Option(False, "--root", "-r", help="루트 레벨에 추가"),
 ):
     """에이전트 설정을 추가합니다."""
@@ -149,7 +155,7 @@ def agent_add(
 
 @app.command("list")
 def agent_list(
-    app_name: Optional[str] = typer.Option(None, "--app", "-a", help="앱 이름"),
+    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
     root: bool = typer.Option(False, "--root", "-r", help="루트 레벨 목록"),
 ):
     """에이전트 목록을 표시합니다."""
@@ -170,6 +176,7 @@ def agent_list(
         scope_label = "루트"
         agents_base = registry.root_agents_path
     else:
+        assert app_name is not None
         if not registry.app_exists(app_name):
             print_error(f"앱 '{app_name}'을(를) 찾을 수 없습니다. (not found)")
             raise typer.Exit(1)
@@ -212,7 +219,7 @@ def agent_list(
 @app.command("show")
 def agent_show(
     agent_id: str = typer.Argument(..., help="에이전트 식별자"),
-    app_name: Optional[str] = typer.Option(None, "--app", "-a", help="앱 이름"),
+    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
     root: bool = typer.Option(False, "--root", "-r", help="루트 레벨"),
     resolved: bool = typer.Option(False, "--resolved", help="상속 병합 후 최종값 조회"),
 ):
@@ -246,7 +253,9 @@ def agent_show(
     # agent.config.yaml 내용 표시
     config_content = (agent_dir / "agent.config.yaml").read_text(encoding="utf-8")
     syntax = Syntax(config_content, "yaml", theme="monokai", line_numbers=True)
-    console.print(Panel(syntax, title=f"에이전트: {agent_id} ({agent_cfg.display_name})", style="blue"))
+    console.print(
+        Panel(syntax, title=f"에이전트: {agent_id} ({agent_cfg.display_name})", style="blue")
+    )
 
     # 기본 파일들도 표시
     for rel_path in agent_cfg.default_files:
@@ -263,9 +272,11 @@ def agent_show(
 @app.command("edit")
 def agent_edit(
     agent_id: str = typer.Argument(..., help="에이전트 식별자"),
-    app_name: Optional[str] = typer.Option(None, "--app", "-a", help="앱 이름"),
+    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
     root: bool = typer.Option(False, "--root", "-r", help="루트 레벨"),
-    file: Optional[str] = typer.Option(None, "--file", "-f", help="편집할 파일명 (기본: agent.config.yaml)"),
+    file: str | None = typer.Option(
+        None, "--file", "-f", help="편집할 파일명 (기본: agent.config.yaml)"
+    ),
 ):
     """에이전트 설정 파일을 편집합니다."""
     try:
@@ -313,7 +324,7 @@ def agent_edit(
 @app.command("remove")
 def agent_remove(
     agent_id: str = typer.Argument(..., help="에이전트 식별자"),
-    app_name: Optional[str] = typer.Option(None, "--app", "-a", help="앱 이름"),
+    app_name: str | None = typer.Option(None, "--app", "-a", help="앱 이름"),
     root: bool = typer.Option(False, "--root", "-r", help="루트 레벨"),
     force: bool = typer.Option(False, "--force", "-f", help="확인 없이 삭제"),
 ):

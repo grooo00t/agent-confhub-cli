@@ -1,11 +1,13 @@
 """Nexus Registry - 파일 경로 및 설정 접근 핵심 모듈"""
+
 from pathlib import Path
-from typing import Optional
+
 import yaml
 
 
 class RegistryNotFoundError(Exception):
     """Registry가 초기화되지 않은 경우 발생하는 예외"""
+
     pass
 
 

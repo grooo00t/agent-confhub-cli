@@ -1,7 +1,6 @@
 """GitRepo 단위 테스트"""
-import pytest
-from pathlib import Path
-from nexus.utils.git import GitRepo, GitError
+
+from nexus.utils.git import GitRepo
 
 
 def test_init_and_is_git_repo(tmp_path):

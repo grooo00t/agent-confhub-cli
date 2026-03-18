@@ -1,17 +1,19 @@
 """ConfigMerger 단위 테스트"""
-import pytest
+
 import json
-from pathlib import Path
+
+import pytest
+
 from nexus.core.merger import (
-    deep_merge,
-    merge_text_files,
-    merge_json_files,
-    get_merge_strategy,
     ConfigMerger,
+    deep_merge,
+    get_merge_strategy,
+    merge_json_files,
+    merge_text_files,
 )
 
-
 # ── deep_merge 테스트 ──────────────────────────────────────────────────────────
+
 
 def test_deep_merge_simple():
     """스칼라 오버라이드"""
@@ -47,6 +49,7 @@ def test_deep_merge_does_not_mutate():
 
 
 # ── merge_text_files 테스트 ───────────────────────────────────────────────────
+
 
 def test_merge_text_append():
     """append: 루트 + 구분선 + 앱"""
@@ -84,6 +87,7 @@ def test_merge_text_no_app():
 
 # ── merge_json_files 테스트 ───────────────────────────────────────────────────
 
+
 def test_merge_json_deep_merge():
     """JSON deep-merge"""
     root = '{"model": "sonnet", "permissions": {"allow": [], "deny": []}}'
@@ -106,6 +110,7 @@ def test_merge_json_replace():
 
 # ── get_merge_strategy 테스트 ─────────────────────────────────────────────────
 
+
 def test_get_merge_strategy_md_default():
     """md 파일 기본 전략: append"""
     assert get_merge_strategy("CLAUDE.md", {}) == "append"
@@ -124,6 +129,7 @@ def test_get_merge_strategy_explicit():
 
 # ── ConfigMerger 통합 테스트 ──────────────────────────────────────────────────
 
+
 @pytest.fixture
 def registry_with_data(tmp_path):
     """테스트용 Registry 데이터 구성"""
@@ -137,7 +143,8 @@ def registry_with_data(tmp_path):
         '{"model": "sonnet", "permissions": {"allow": [], "deny": []}}', encoding="utf-8"
     )
     (base / "root" / "agents" / "claude" / "agent.config.yaml").write_text(
-        "agent: claude\nmerge:\n  CLAUDE.md: append\n  settings.json: deep-merge\n", encoding="utf-8"
+        "agent: claude\nmerge:\n  CLAUDE.md: append\n  settings.json: deep-merge\n",
+        encoding="utf-8",
     )
 
     # apps/web-frontend/agents/claude/.claude/
@@ -201,7 +208,9 @@ def test_resolver_header_in_md(registry_with_data):
 def test_resolver_replace_strategy(registry_with_data):
     """replace 전략: 앱 내용만"""
     # agent.config.yaml에 replace 전략 설정
-    config_file = registry_with_data / "apps" / "web-frontend" / "agents" / "claude" / "agent.config.yaml"
+    config_file = (
+        registry_with_data / "apps" / "web-frontend" / "agents" / "claude" / "agent.config.yaml"
+    )
     config_file.parent.mkdir(parents=True, exist_ok=True)
     config_file.write_text("agent: claude\nmerge:\n  CLAUDE.md: replace\n", encoding="utf-8")
 

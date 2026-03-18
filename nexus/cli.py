@@ -1,10 +1,12 @@
 """Nexus CLI - 진입점 모듈"""
+
 from pathlib import Path
-from typing import Optional
+
 import typer
+
 from nexus import __version__
-from nexus.commands import app as app_cmd
 from nexus.commands import agent as agent_cmd
+from nexus.commands import app as app_cmd
 from nexus.commands.link import link_app
 from nexus.commands.sync import sync_app
 
@@ -29,7 +31,7 @@ def version_callback(value: bool):
 
 @app.callback()
 def main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -43,72 +45,65 @@ def main(
 
 @app.command("init")
 def init_command(
-    path: Optional[Path] = typer.Option(
-        None, "--path", "-p", help="Registry 경로"
-    ),
-    from_repo: Optional[str] = typer.Option(
-        None, "--from-repo", help="Git 레포 URL에서 초기화"
-    ),
+    path: Path | None = typer.Option(None, "--path", "-p", help="Registry 경로"),
+    from_repo: str | None = typer.Option(None, "--from-repo", help="Git 레포 URL에서 초기화"),
 ):
     """Nexus Registry를 초기화합니다."""
     from nexus.commands.init import do_init
+
     do_init(path, from_repo)
 
 
 @app.command("resolve")
 def resolve_command(
-    app_name: Optional[str] = typer.Argument(None, help="앱 이름 (생략시 --all 필요)"),
+    app_name: str | None = typer.Argument(None, help="앱 이름 (생략시 --all 필요)"),
     all_apps: bool = typer.Option(False, "--all", "-a", help="모든 앱 빌드"),
     dry_run: bool = typer.Option(False, "--dry-run", help="결과 미리보기 (파일 미생성)"),
 ):
     """설정을 병합하여 resolved 디렉토리에 저장합니다."""
     from nexus.commands.resolve import do_resolve
+
     do_resolve(app_name, all_apps, dry_run)
 
 
 @app.command("unlink")
 def unlink_command(
     app_name: str = typer.Argument(..., help="앱 이름"),
-    target: Optional[Path] = typer.Option(
+    target: Path | None = typer.Option(
         None, "--target", "-t", help="링크 해제할 프로젝트 경로 (기본: 현재 디렉토리)"
     ),
-    agent: Optional[str] = typer.Option(
+    agent: str | None = typer.Option(
         None, "--agent", help="특정 에이전트만 해제 (쉼표 구분: claude,gemini)"
     ),
 ):
     """프로젝트의 심볼릭 링크를 해제합니다."""
     from nexus.commands.link import do_unlink
+
     do_unlink(app_name, target, agent)
 
 
 @app.command("status")
 def status_command(
-    app_name: Optional[str] = typer.Option(
-        None, "--app", help="특정 앱 이름"
-    ),
-    with_links: bool = typer.Option(
-        False, "--with-links", help="링크 상태 포함"
-    ),
+    app_name: str | None = typer.Option(None, "--app", help="특정 앱 이름"),
+    with_links: bool = typer.Option(False, "--with-links", help="링크 상태 포함"),
 ):
     """Registry 상태를 표시합니다."""
     from nexus.commands.status import do_status
+
     do_status(app_name, with_links)
 
 
 @app.command("install")
 def install_command(
-    from_repo: Optional[str] = typer.Option(
-        None, "--from-repo", help="Git 레포 URL에서 설치"
-    ),
-    verify: bool = typer.Option(
-        False, "--verify", help="설치 상태 확인"
-    ),
-    apps: Optional[str] = typer.Option(
+    from_repo: str | None = typer.Option(None, "--from-repo", help="Git 레포 URL에서 설치"),
+    verify: bool = typer.Option(False, "--verify", help="설치 상태 확인"),
+    apps: str | None = typer.Option(
         None, "--apps", help="특정 앱만 설치 (쉼표 구분: web-frontend,api-server)"
     ),
 ):
     """Git 레포에서 Registry를 설치합니다."""
     from nexus.commands.install import do_install
+
     do_install(from_repo, verify, apps)
 
 

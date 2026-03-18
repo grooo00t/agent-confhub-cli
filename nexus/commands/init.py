@@ -1,16 +1,17 @@
 """nxs init 명령어 - Nexus Registry 초기화"""
-from pathlib import Path
-from typing import Optional
+
 import json
+from pathlib import Path
+
 import yaml
 
 from nexus.core.registry import Registry
 from nexus.utils.console import (
-    print_success,
-    print_error,
-    print_warning,
-    print_info,
     console,
+    print_error,
+    print_info,
+    print_success,
+    print_warning,
 )
 
 # ── 템플릿 상수 ────────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ SETTINGS_JSON_TEMPLATE = {
 # ── 핵심 로직 ──────────────────────────────────────────────────────────────────
 
 
-def do_init(path: Optional[Path], from_repo: Optional[str]) -> None:
+def do_init(path: Path | None, from_repo: str | None) -> None:
     """nxs init 핵심 로직.
 
     Args:

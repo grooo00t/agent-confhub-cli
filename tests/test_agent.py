@@ -1,13 +1,12 @@
 """nxs agent 명령어 테스트"""
+
 import pytest
 import yaml
-from pathlib import Path
 from typer.testing import CliRunner
 
 from nexus.cli import app
+from nexus.core.agents import SUPPORTED_AGENTS, get_agent
 from nexus.core.registry import Registry
-from nexus.core.agents import get_agent, SUPPORTED_AGENTS
-
 
 runner = CliRunner()
 
@@ -151,6 +150,7 @@ def test_agent_remove_not_found(initialized_registry):
 def test_get_agent_valid():
     """유효한 에이전트 식별자"""
     from nexus.core.agents import get_agent
+
     agent = get_agent("claude")
     assert agent.identifier == "claude"
     assert agent.display_name == "Anthropic Claude"

@@ -1,13 +1,13 @@
 """nxs init 명령어 테스트"""
-import pytest
-from pathlib import Path
-import yaml
+
 import json
+
+import pytest
+import yaml
 from typer.testing import CliRunner
 
 from nexus.cli import app
 from nexus.core.registry import Registry
-
 
 runner = CliRunner()
 

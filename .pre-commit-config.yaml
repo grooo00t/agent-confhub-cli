@@ -1,10 +1,4 @@
 repos:
-  # ty: Astral Python type checker
-  - repo: https://github.com/astral-sh/ty
-    rev: 0.0.0-alpha.8
-    hooks:
-      - id: ty-check
-
   # ruff: fast Python linter & formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.10

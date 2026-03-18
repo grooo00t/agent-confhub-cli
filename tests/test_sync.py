@@ -1,9 +1,11 @@
 """nxs sync 명령어 테스트"""
+
 import pytest
 from typer.testing import CliRunner
+
 from nexus.cli import app
 from nexus.core.registry import Registry
-from nexus.utils.git import GitRepo, GitError
+from nexus.utils.git import GitRepo
 
 runner = CliRunner()
 

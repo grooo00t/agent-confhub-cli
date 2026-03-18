@@ -1,7 +1,6 @@
 """Linker 단위 테스트"""
-import json
+
 import shutil
-from pathlib import Path
 
 import pytest
 

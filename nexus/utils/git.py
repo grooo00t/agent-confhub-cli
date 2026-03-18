@@ -1,10 +1,11 @@
 """GitPython 래퍼 - Registry Git 조작"""
+
 from pathlib import Path
-from typing import Optional
 
 
 class GitError(Exception):
     """Git 조작 오류"""
+
     pass
 
 
@@ -20,6 +21,7 @@ class GitRepo:
         if self._repo is None:
             try:
                 import git
+
                 self._repo = git.Repo(self.repo_path)
             except Exception as exc:
                 raise GitError(f"Git 레포를 열 수 없습니다: {self.repo_path}\n{exc}")
@@ -36,10 +38,11 @@ class GitRepo:
     def init(self) -> None:
         """Git 레포 초기화"""
         import git
+
         git.Repo.init(self.repo_path)
         self._repo = None  # 캐시 초기화
 
-    def get_remote_url(self) -> Optional[str]:
+    def get_remote_url(self) -> str | None:
         """origin remote URL"""
         try:
             repo = self._get_repo()
@@ -77,7 +80,7 @@ class GitRepo:
         commit = repo.index.commit(message)
         return commit.hexsha
 
-    def push(self, remote: str = "origin", branch: Optional[str] = None) -> None:
+    def push(self, remote: str = "origin", branch: str | None = None) -> None:
         """push"""
         repo = self._get_repo()
         if not branch:
@@ -87,7 +90,7 @@ class GitRepo:
         except Exception as exc:
             raise GitError(f"push 실패: {exc}")
 
-    def pull(self, remote: str = "origin", branch: Optional[str] = None) -> None:
+    def pull(self, remote: str = "origin", branch: str | None = None) -> None:
         """pull"""
         repo = self._get_repo()
         if not branch:
@@ -100,6 +103,7 @@ class GitRepo:
     def clone(self, url: str, target: Path) -> None:
         """URL에서 클론"""
         import git
+
         try:
             git.Repo.clone_from(url, target)
         except Exception as exc:

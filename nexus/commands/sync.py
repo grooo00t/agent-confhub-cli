@@ -1,10 +1,8 @@
 """nxs sync 명령어 - Registry Git 동기화"""
-from typing import Optional
 
 import typer
 
 from nexus.core.registry import Registry, RegistryNotFoundError
-from nexus.utils.git import GitRepo, GitError
 from nexus.utils.console import (
     console,
     print_error,
@@ -12,6 +10,7 @@ from nexus.utils.console import (
     print_success,
     print_warning,
 )
+from nexus.utils.git import GitError, GitRepo
 
 sync_app = typer.Typer(help="Git 동기화")
 remote_app = typer.Typer(help="remote 설정")

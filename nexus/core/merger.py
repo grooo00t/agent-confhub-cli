@@ -1,9 +1,9 @@
 """설정 상속/병합 로직"""
-from pathlib import Path
-from typing import Optional
-import json
+
 import copy
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import yaml
 
@@ -25,8 +25,8 @@ def deep_merge(base: dict, override: dict) -> dict:
 
 
 def merge_text_files(
-    root_content: Optional[str],
-    app_content: Optional[str],
+    root_content: str | None,
+    app_content: str | None,
     strategy: str,
     app_name: str,
 ) -> str:
@@ -51,8 +51,8 @@ def merge_text_files(
 
 
 def merge_json_files(
-    root_content: Optional[str],
-    app_content: Optional[str],
+    root_content: str | None,
+    app_content: str | None,
     strategy: str,
 ) -> str:
     """JSON 파일 병합 (deep-merge/replace)"""
@@ -116,7 +116,7 @@ class ConfigMerger:
         Returns:
             {파일명: 병합된 내용} 딕셔너리
         """
-        from nexus.core.agents import get_agent, AGENTS
+        from nexus.core.agents import get_agent
 
         # 경로 설정
         root_agent_dir = self.registry_base / "root" / "agents" / agent
@@ -158,8 +158,12 @@ class ConfigMerger:
             root_file = root_src / filename if root_src.exists() else None
             app_file = app_src / filename if app_src.exists() else None
 
-            root_content = root_file.read_text(encoding="utf-8") if root_file and root_file.exists() else None
-            app_content = app_file.read_text(encoding="utf-8") if app_file and app_file.exists() else None
+            root_content = (
+                root_file.read_text(encoding="utf-8") if root_file and root_file.exists() else None
+            )
+            app_content = (
+                app_file.read_text(encoding="utf-8") if app_file and app_file.exists() else None
+            )
 
             strategy = get_merge_strategy(filename, merge_config)
             suffix = Path(filename).suffix.lower()

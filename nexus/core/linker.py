@@ -1,16 +1,17 @@
 """심볼릭 링크 관리"""
-from pathlib import Path
-from typing import Optional
+
 import json
 import shutil
 from datetime import datetime, timezone
+from pathlib import Path
 
-from nexus.core.agents import get_agent, SUPPORTED_AGENTS
+from nexus.core.agents import SUPPORTED_AGENTS, get_agent
 from nexus.core.merger import ConfigMerger
 
 
 class LinkerError(Exception):
     """링크 관련 오류"""
+
     pass
 
 
@@ -53,7 +54,7 @@ class Linker:
         self,
         app_name: str,
         project_path: Path,
-        agents: Optional[list[str]] = None,
+        agents: list[str] | None = None,
         auto_resolve: bool = True,
     ) -> list[str]:
         """앱 설정을 프로젝트에 링크.
@@ -116,7 +117,7 @@ class Linker:
         self,
         app_name: str,
         project_path: Path,
-        agents: Optional[list[str]] = None,
+        agents: list[str] | None = None,
     ) -> list[str]:
         """링크 해제.
 
@@ -155,12 +156,14 @@ class Linker:
                 for agent in entry.get("agents", []):
                     link_path = self._get_project_link_path(project_path, agent)
                     if link_path.is_symlink() and not link_path.exists():
-                        broken.append({
-                            "app": app_name,
-                            "project": str(project_path),
-                            "agent": agent,
-                            "link_path": str(link_path),
-                        })
+                        broken.append(
+                            {
+                                "app": app_name,
+                                "project": str(project_path),
+                                "agent": agent,
+                                "link_path": str(link_path),
+                            }
+                        )
 
         return broken
 
@@ -171,30 +174,25 @@ class Linker:
             return []
         return [d.name for d in agents_dir.iterdir() if d.is_dir()]
 
-    def _register_link(
-        self, app_name: str, project_path: Path, agents: list[str]
-    ) -> None:
+    def _register_link(self, app_name: str, project_path: Path, agents: list[str]) -> None:
         links = self._load_links()
         if app_name not in links:
             links[app_name] = []
 
         # 기존 항목 제거 (같은 project_path)
-        links[app_name] = [
-            e for e in links[app_name]
-            if e["project_path"] != str(project_path)
-        ]
+        links[app_name] = [e for e in links[app_name] if e["project_path"] != str(project_path)]
 
-        links[app_name].append({
-            "project_path": str(project_path),
-            "agents": agents,
-            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        })
+        links[app_name].append(
+            {
+                "project_path": str(project_path),
+                "agents": agents,
+                "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+        )
 
         self._save_links(links)
 
-    def _unregister_link(
-        self, app_name: str, project_path: Path, agents: list[str]
-    ) -> None:
+    def _unregister_link(self, app_name: str, project_path: Path, agents: list[str]) -> None:
         links = self._load_links()
         if app_name not in links:
             return

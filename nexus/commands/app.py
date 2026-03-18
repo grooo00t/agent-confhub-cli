@@ -1,7 +1,6 @@
 """nxs app 명령어 - 앱 관리"""
+
 import shutil
-from pathlib import Path
-from typing import Optional
 
 import typer
 import yaml
@@ -10,17 +9,18 @@ from rich.panel import Panel
 from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.utils.console import (
     console,
+    make_table,
     print_error,
     print_info,
     print_success,
     print_warning,
-    make_table,
 )
 
 app = typer.Typer(help="앱 관리")
 
 
 # ── 템플릿 상수 ────────────────────────────────────────────────────────────────
+
 
 def _build_app_config(name: str, description: str = "") -> dict:
     """app.config.yaml 템플릿 생성"""
@@ -42,6 +42,7 @@ def _build_app_config(name: str, description: str = "") -> dict:
 
 # ── 유틸리티 ───────────────────────────────────────────────────────────────────
 
+
 def _get_registry() -> Registry:
     """기본 Registry를 반환하고, 초기화 여부를 확인한다."""
     registry = Registry.get_default()
@@ -50,6 +51,7 @@ def _get_registry() -> Registry:
 
 
 # ── 명령어 ─────────────────────────────────────────────────────────────────────
+
 
 @app.command("add")
 def app_add(

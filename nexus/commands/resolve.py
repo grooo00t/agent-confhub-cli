@@ -1,13 +1,13 @@
 """nxs resolve 명령어 - 설정 병합 빌드"""
+
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 
-from nexus.core.registry import Registry, RegistryNotFoundError
 from nexus.core.merger import ConfigMerger
-from nexus.utils.console import print_success, print_error, print_info, console
+from nexus.core.registry import Registry, RegistryNotFoundError
+from nexus.utils.console import console, print_error, print_info, print_success
 
 # resolve 하위 서브커맨드가 없으므로 app 객체는 유지하되 실제 로직은 do_resolve로 분리
 app = typer.Typer(help="설정 병합 빌드")
@@ -48,7 +48,7 @@ def _print_dry_run_results(app_name: str, agent: str, results: dict[str, str]) -
 
 
 def do_resolve(
-    app_name: Optional[str],
+    app_name: str | None,
     all_apps: bool,
     dry_run: bool,
 ) -> None:
@@ -100,6 +100,7 @@ def do_resolve(
 
     else:
         # 단일 앱 빌드
+        assert app_name is not None
         if not registry.app_exists(app_name):
             print_error(f"앱 '{app_name}'을(를) 찾을 수 없습니다. (not found)")
             raise typer.Exit(1)
@@ -117,9 +118,7 @@ def do_resolve(
                 print_info(f"앱 '{app_name}': 병합할 에이전트가 없습니다.")
         else:
             if results:
-                print_success(
-                    f"앱 '{app_name}' 병합 완료 ({len(results)}개 에이전트)"
-                )
+                print_success(f"앱 '{app_name}' 병합 완료 ({len(results)}개 에이전트)")
                 resolved_base = registry.resolved_path / app_name
                 print_info(f"결과 위치: {resolved_base}")
             else:
