@@ -93,3 +93,7 @@ confhub install [--from-repo URL] [--verify] [--apps app1,app2]
 | `deep-merge` | JSON 필드 단위 재귀 병합, 스칼라는 앱이 오버라이드 | `.json` 파일 |
 | `replace` | 앱 내용이 루트를 완전 대체 | 명시적 지정 시 |
 | `prepend` | 앱 내용 앞에 루트 내용 추가 | 명시적 지정 시 |
+
+## 빌드
+이전 빌드 파일을 삭제하고 버전을 변경한 뒤 빌드 진행
+버전은 수정 정도에 따라 메이져, 마이너를 결정
