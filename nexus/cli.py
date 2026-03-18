@@ -4,6 +4,7 @@ from typing import Optional
 import typer
 from nexus import __version__
 from nexus.commands import app as app_cmd
+from nexus.commands import agent as agent_cmd
 
 app = typer.Typer(
     name="nxs",
@@ -12,6 +13,7 @@ app = typer.Typer(
 )
 
 app.add_typer(app_cmd.app, name="app")
+app.add_typer(agent_cmd.app, name="agent")
 
 
 def version_callback(value: bool):
