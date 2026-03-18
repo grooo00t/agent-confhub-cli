@@ -24,7 +24,7 @@ graph TD
 ## 설치
 
 ```bash
-pipx install nexus-agent
+pipx install agent-confhub-cli
 ```
 
 ## 빠른 시작
