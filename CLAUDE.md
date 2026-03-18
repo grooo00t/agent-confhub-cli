@@ -1,6 +1,6 @@
 # ConfHub CLI
 
-AI 에이전트(Claude, Gemini, Codex, Cursor, Copilot) 설정을 중앙에서 관리하고 프로젝트별 심볼릭 링크로 적용하는 CLI 프레임워크. CLI 명령어: `nxs`.
+AI 에이전트(Claude, Gemini, Codex, Cursor, Copilot) 설정을 중앙에서 관리하고 프로젝트별 심볼릭 링크로 적용하는 CLI 프레임워크. CLI 명령어: `confhub`.
 
 ## 개발 환경 설정
 
@@ -15,7 +15,7 @@ uv run pytest tests/test_registry.py  # 특정 파일
 uv run pytest -v --cov=confhub           # 커버리지 포함
 
 # CLI 실행
-uv run nxs --help
+uv run confhub --help
 
 # 린트/타입 검사
 uv tool run ruff check .
@@ -52,7 +52,7 @@ uv tool run ty check confhub/
 │               └── .claude/
 │                   ├── CLAUDE.md
 │                   └── settings.json
-├── resolved/          # .gitignore 대상, nxs resolve로 자동 생성
+├── resolved/          # confhub resolve로 자동 생성
 │   └── web-frontend/
 │       └── claude/
 │           └── .claude/
@@ -73,16 +73,16 @@ uv tool run ty check confhub/
 ## CLI 명령어
 
 ```bash
-nxs init [--path PATH] [--from-repo URL]
-nxs app add <name> / list / show <name> / remove <name>
-nxs agent add <agent> --app <app>|--root
-nxs agent edit/show/list/remove <agent> --app <app>|--root
-nxs resolve <app> / --all / --dry-run
-nxs link <app> [--target PATH] [--agent claude,gemini]
-nxs unlink <app>
-nxs sync push [--message MSG] / pull / remote set <url>
-nxs status [--app NAME] [--with-links]
-nxs install [--from-repo URL] [--verify] [--apps app1,app2]
+confhub init [--path PATH] [--from-repo URL]
+confhub app add <name> / list / show <name> / remove <name>
+confhub agent add <agent> --app <app>|--root
+confhub agent edit/show/list/remove <agent> --app <app>|--root
+confhub resolve <app> / --all / --dry-run
+confhub link <app> [--target PATH] [--agent claude,gemini]
+confhub unlink <app>
+confhub sync push [--message MSG] / pull / remote set <url>
+confhub status [--app NAME] [--with-links]
+confhub install [--from-repo URL] [--verify] [--apps app1,app2]
 ```
 
 ## 병합 전략

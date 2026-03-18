@@ -1,4 +1,4 @@
-# ConfHub CLI (`nxs`)
+# ConfHub CLI (`confhub`)
 
 AI 에이전트(Claude, Gemini, Codex, Cursor, Copilot) 설정을 팀 전체에 중앙 관리하는 CLI 프레임워크.
 
@@ -15,10 +15,10 @@ graph TD
     SYMLINK[".claude/ 심볼릭 링크"]
 
     ROOT -->|"상속 + 오버라이드"| RESOLVED
-    APP -->|"nxs resolve"| RESOLVED
-    RESOLVED -->|"nxs sync push"| REMOTE
+    APP -->|"confhub resolve"| RESOLVED
+    RESOLVED -->|"confhub sync push"| REMOTE
     REMOTE -->|"git submodule"| PROJECT
-    PROJECT -->|"nxs submodule init"| SYMLINK
+    PROJECT -->|"confhub submodule init"| SYMLINK
 ```
 
 ## 설치
@@ -31,37 +31,37 @@ pipx install agent-confhub-cli
 
 ```bash
 # Registry 초기화
-nxs init
+confhub init
 
 # 앱 등록
-nxs app add web-frontend
+confhub app add web-frontend
 
 # Claude 에이전트 설정 추가
-nxs agent add claude --app web-frontend
+confhub agent add claude --app web-frontend
 
 # 설정 병합
-nxs resolve web-frontend
+confhub resolve web-frontend
 
 # 프로젝트에 심볼릭 링크 연결
-nxs link web-frontend --target /workspace/my-project
+confhub link web-frontend --target /workspace/my-project
 ```
 
 ## 주요 명령어
 
 | 명령어 | 설명 |
 |--------|------|
-| `nxs init` | Registry 초기화 |
-| `nxs app add/list/show/remove` | 앱 관리 |
-| `nxs agent add/list/show/remove` | 에이전트 설정 관리 |
-| `nxs resolve <app>` | 설정 병합 빌드 |
-| `nxs link <app>` | 프로젝트에 심볼릭 링크 |
-| `nxs unlink <app>` | 링크 해제 |
-| `nxs submodule add <app>` | 프로젝트에 git submodule + sparse-checkout으로 설정 적용 |
-| `nxs submodule init <app>` | 클론 후 sparse-checkout 및 심볼릭 링크 설정 (팀원용) |
-| `nxs submodule remove <app>` | submodule 설정 제거 |
-| `nxs sync push/pull` | Git 동기화 |
-| `nxs status` | Registry 상태 확인 |
-| `nxs install --from-repo <url>` | 회사 레포 설치 |
+| `confhub init` | Registry 초기화 |
+| `confhub app add/list/show/remove` | 앱 관리 |
+| `confhub agent add/list/show/remove` | 에이전트 설정 관리 |
+| `confhub resolve <app>` | 설정 병합 빌드 |
+| `confhub link <app>` | 프로젝트에 심볼릭 링크 |
+| `confhub unlink <app>` | 링크 해제 |
+| `confhub submodule add <app>` | 프로젝트에 git submodule + sparse-checkout으로 설정 적용 |
+| `confhub submodule init <app>` | 클론 후 sparse-checkout 및 심볼릭 링크 설정 (팀원용) |
+| `confhub submodule remove <app>` | submodule 설정 제거 |
+| `confhub sync push/pull` | Git 동기화 |
+| `confhub status` | Registry 상태 확인 |
+| `confhub install --from-repo <url>` | 회사 레포 설치 |
 
 ## 지원 에이전트
 
@@ -84,21 +84,21 @@ sequenceDiagram
     participant G as confhub-config (git)
     participant T as 팀원
 
-    A->>R: nxs app add / nxs agent add
+    A->>R: confhub app add / confhub agent add
     A->>R: 파일 직접 편집
-    A->>R: nxs resolve <app>
-    A->>G: nxs sync push
-    T->>G: nxs sync pull
-    T->>R: nxs resolve --all
+    A->>R: confhub resolve <app>
+    A->>G: confhub sync push
+    T->>G: confhub sync pull
+    T->>R: confhub resolve --all
     Note over T: 심볼릭 링크로<br/>연결된 프로젝트에 즉시 반영
 ```
 
 ```bash
 # 설정 관리자 - 설정 변경 후 push
-nxs sync push --message "feat: Claude 설정 업데이트"
+confhub sync push --message "feat: Claude 설정 업데이트"
 
 # 팀원 - pull 후 resolve로 로컬 반영
-nxs sync pull && nxs resolve --all
+confhub sync pull && confhub resolve --all
 ```
 
 ### Git Submodule 방식 (sparse-checkout으로 앱 설정만 적용)
@@ -113,16 +113,16 @@ sequenceDiagram
     participant P as api-server 프로젝트
     participant T as 팀원
 
-    A->>N: nxs app add api-server
-    A->>N: nxs agent add claude --app api-server
+    A->>N: confhub app add api-server
+    A->>N: confhub agent add claude --app api-server
     A->>N: 파일 직접 편집
-    A->>G: nxs submodule add api-server --target ./api-server
+    A->>G: confhub submodule add api-server --target ./api-server
     Note over A,G: resolve → push → submodule add<br/>→ sparse-checkout 자동 수행
     A->>P: .nexus-config/ submodule + .claude/ 심볼릭 링크 생성
     A->>P: git push (프로젝트 레포)
 
     T->>P: git clone api-server
-    T->>P: nxs submodule init api-server
+    T->>P: confhub submodule init api-server
     Note over T,P: sparse-checkout + 심볼릭 링크 자동 설정
 ```
 
@@ -130,16 +130,16 @@ sequenceDiagram
 
 ```bash
 # 1. Registry를 private 레포와 연결
-nxs sync remote set https://github.com/your-team/confhub-config.git
+confhub sync remote set https://github.com/your-team/confhub-config.git
 
 # 2. 앱 및 에이전트 설정 준비
-nxs app add api-server
-nxs agent add claude --app api-server
+confhub app add api-server
+confhub agent add claude --app api-server
 # ~/.confhub/apps/api-server/agents/claude/ 에서 직접 파일 편집
 
 # 3. 프로젝트에 submodule 적용
 #    resolve → remote push → git submodule add → sparse-checkout 자동 수행
-nxs submodule add api-server --target /workspace/api-server
+confhub submodule add api-server --target /workspace/api-server
 ```
 
 **프로젝트 레포에 생성되는 구조:**
@@ -162,7 +162,7 @@ git clone --recurse-submodules https://github.com/your-team/api-server.git
 cd api-server
 
 # sparse-checkout 적용 (resolved/api-server/ 만 체크아웃)
-nxs submodule init api-server
+confhub submodule init api-server
 ```
 
 **설정 업데이트:**
@@ -170,21 +170,21 @@ nxs submodule init api-server
 ```mermaid
 flowchart LR
     E["파일 직접 편집\n~/.confhub/apps/api-server/..."]
-    S["nxs submodule add api-server\n--target ./api-server"]
+    S["confhub submodule add api-server\n--target ./api-server"]
     GP["git push\n(프로젝트 레포)"]
-    T["팀원: git pull\n+ git submodule update\n+ nxs submodule init api-server"]
+    T["팀원: git pull\n+ git submodule update\n+ confhub submodule init api-server"]
 
     E --> S --> GP --> T
 ```
 
 ```bash
 # ~/.confhub/apps/api-server/agents/claude/ 파일 직접 수정 후
-nxs submodule add api-server --target /workspace/api-server
+confhub submodule add api-server --target /workspace/api-server
 # resolve → confhub push → submodule ref + 심볼릭 링크 커밋
 
 # 팀원은 프로젝트에서 반영
 git pull && git submodule update
-nxs submodule init api-server  # sparse-checkout 재적용
+confhub submodule init api-server  # sparse-checkout 재적용
 ```
 
 ## 개발

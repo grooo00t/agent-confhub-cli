@@ -4,8 +4,23 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-confhub-cli"
-version = "0.1.0"
-description = "AI 에이전트 설정 중앙 관리 CLI 프레임워크"
+version = "0.3.0"
+description = "Centralized AI agent configuration manager for Claude, Gemini, Cursor, Copilot, and Codex"
+readme = "README.md"
+license = { text = "MIT" }
+keywords = ["ai", "claude", "gemini", "cursor", "copilot", "codex", "configuration", "cli", "devtools"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
 requires-python = ">=3.10"
 dependencies = [
     "typer>=0.9.0",
@@ -16,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]
-nxs = "confhub.cli:app"
+confhub = "confhub.cli:app"
 
 [project.optional-dependencies]
 dev = [

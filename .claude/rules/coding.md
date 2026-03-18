@@ -13,7 +13,7 @@
 ## CLI 패턴
 
 - 오류 발생 시 `print_error()`로 메시지를 출력하고 `raise typer.Exit(1)`로 종료한다.
-- Registry 미초기화 상태는 `RegistryNotFoundError`로 처리하고 `nxs init` 실행을 안내한다.
+- Registry 미초기화 상태는 `RegistryNotFoundError`로 처리하고 `confhub init` 실행을 안내한다.
 - 성공/경고/오류는 `print_success()` / `print_warning()` / `print_error()` 헬퍼로 구분 출력한다.
 
 ## 린트/타입 검사

@@ -12,7 +12,7 @@ from confhub.commands.submodule import submodule_app
 from confhub.commands.sync import sync_app
 
 app = typer.Typer(
-    name="nxs",
+    name="confhub",
     help="ConfHub CLI - AI 에이전트 설정 관리",
     add_completion=False,
 )
