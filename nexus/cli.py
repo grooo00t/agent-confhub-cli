@@ -51,5 +51,16 @@ def init_command(
     do_init(path, from_repo)
 
 
+@app.command("resolve")
+def resolve_command(
+    app_name: Optional[str] = typer.Argument(None, help="앱 이름 (생략시 --all 필요)"),
+    all_apps: bool = typer.Option(False, "--all", "-a", help="모든 앱 빌드"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="결과 미리보기 (파일 미생성)"),
+):
+    """설정을 병합하여 resolved 디렉토리에 저장합니다."""
+    from nexus.commands.resolve import do_resolve
+    do_resolve(app_name, all_apps, dry_run)
+
+
 if __name__ == "__main__":
     app()
