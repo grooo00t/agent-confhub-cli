@@ -109,13 +109,13 @@ def do_init(path: Path | None, from_repo: str | None) -> None:
     # 대상 경로 결정
     registry_path = Path(path) if path is not None else Registry.DEFAULT_PATH
 
-    # 이미 초기화된 경우 경고 후 종료
+    # 이미 초기화된 경우 훅만 업데이트 후 종료
     registry = Registry(registry_path)
     if registry.is_initialized():
-        print_warning(
-            f"이미 초기화된 Registry입니다: {registry_path}\n"
-            "기존 설정을 유지합니다. (already initialized)"
-        )
+        print_warning(f"이미 초기화된 Registry입니다: {registry_path}")
+        print_info("pre-commit 훅을 최신 버전으로 업데이트합니다...")
+        _install_pre_commit_hook(registry_path)
+        print_success("pre-commit 훅 업데이트 완료.")
         return
 
     try:
